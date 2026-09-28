@@ -109,19 +109,15 @@ Completed so far:
 - System settings
 - Basic SQL queries
 - GitHub repository setup
-
-
-## Current Progress
-
-* Database schema is completed
-* SQL file has been added to the repository
-* JDBC connection is set up and working
-* DAO classes for Users, Pets, Adoption Applications, Messages and Settings are implemented
-* Basic login functionality is working
-* DAO test files have been added and tested
-* MySQL Connector/J has been added to the project
-* Database and JDBC files have been pushed to GitHub
-* GUI, backend and integration are currently being worked on
+-  Database schema is completed
+- SQL file has been added to the repository
+- JDBC connection is set up and working
+- DAO classes for Users, Pets, Adoption Applications, Messages and Settings are implemented
+- Basic login functionality is working
+- DAO test files have been added and tested
+- MySQL Connector/J has been added to the project
+- Database and JDBC files have been pushed to GitHub
+- GUI, backend and integration are currently being worked on
 
 ## Team
 
