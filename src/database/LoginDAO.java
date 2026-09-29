@@ -4,6 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+/**
+ * Handles user login by checking email and password
+ * against the Users table.
+ */
 
 public class LoginDAO {
 

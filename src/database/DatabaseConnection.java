@@ -3,7 +3,9 @@ package database;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-
+/**
+ * Handles the connection between the application and MySQL database.
+ */
 public class DatabaseConnection {
 
     private static final String URL =

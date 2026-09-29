@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+/**
+ * Handles database operations for messages between users.
+ */
 public class MessageDAO {
 
     public void getAllMessages() {

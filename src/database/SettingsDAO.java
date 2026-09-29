@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+/**
+ * Handles database operations for platform settings.
+ */
 public class SettingsDAO {
 
     public void getAllSettings() {
