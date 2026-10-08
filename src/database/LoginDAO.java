@@ -4,11 +4,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 /**
  * Handles user login by checking email and password
  * against the Users table.
  */
-
 public class LoginDAO {
 
     public void login(String email, String password) {
@@ -49,5 +49,57 @@ public class LoginDAO {
 
             e.printStackTrace();
         }
+    }
+
+
+    // Used by the backend/service layer during integration
+    public Object[] getLoggedInUser(String email, String password) {
+
+        String sql =
+            "SELECT user_id, name, role " +
+            "FROM Users " +
+            "WHERE email = ? AND password = ?";
+
+        try {
+
+            Connection connection =
+                DatabaseConnection.getConnection();
+
+            PreparedStatement statement =
+                connection.prepareStatement(sql);
+
+            statement.setString(1, email);
+            statement.setString(2, password);
+
+            ResultSet result =
+                statement.executeQuery();
+
+            if (result.next()) {
+
+                Object[] user = {
+                    result.getInt("user_id"),
+                    result.getString("name"),
+                    result.getString("role")
+                };
+
+                result.close();
+                statement.close();
+
+                DatabaseConnection.closeConnection(connection);
+
+                return user;
+            }
+
+            result.close();
+            statement.close();
+
+            DatabaseConnection.closeConnection(connection);
+
+        } catch (SQLException e) {
+
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }
