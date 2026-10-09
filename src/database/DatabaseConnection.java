@@ -14,7 +14,7 @@ public class DatabaseConnection {
 
     private static final String USER = env("DB_USER", "root");
 
-    private static final String PASSWORD = env("DB_PASSWORD", "Your_Password");
+    private static final String PASSWORD = env("DB_PASSWORD", "Adya123");
 
     private static String env(String name, String fallback) {
         String value = System.getenv(name);

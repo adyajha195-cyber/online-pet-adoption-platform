@@ -41,26 +41,26 @@ public class AdoptionApplicationDAO {
     }
 
     public List<AdoptionApplication> getAllApplications() throws SQLException {
-        return query("SELECT " + COLUMNS + " FROM AdoptionApplications a ORDER BY a.application_id", 0);
+        return query("SELECT " + COLUMNS + " FROM adoptionapplications a ORDER BY a.application_id", 0);
     }
 
     /** Returns the application, or null if no application has this id. */
     public AdoptionApplication getApplicationById(int applicationId) throws SQLException {
         List<AdoptionApplication> found = query(
-            "SELECT " + COLUMNS + " FROM AdoptionApplications a WHERE a.application_id = ?", applicationId);
+            "SELECT " + COLUMNS + " FROM adoptionapplications a WHERE a.application_id = ?", applicationId);
         return found.isEmpty() ? null : found.get(0);
     }
 
     /** Adopter's "track my applications" / adoption history screen. */
     public List<AdoptionApplication> getApplicationsByAdopter(int adopterId) throws SQLException {
-        return query("SELECT " + COLUMNS + " FROM AdoptionApplications a "
+        return query("SELECT " + COLUMNS + " FROM adoptionapplications a "
                    + "WHERE a.adopter_id = ? ORDER BY a.application_id", adopterId);
     }
 
     /** Shelter's "view applications" screen: applications for pets this shelter owns. */
     public List<AdoptionApplication> getApplicationsByShelter(int shelterUserId) throws SQLException {
-        return query("SELECT " + COLUMNS + " FROM AdoptionApplications a "
-                   + "JOIN Pets p ON a.pet_id = p.pet_id "
+        return query("SELECT " + COLUMNS + " FROM adoptionapplications a "
+                   + "JOIN pets p ON a.pet_id = p.pet_id "
                    + "WHERE p.shelter_user_id = ? ORDER BY a.application_id", shelterUserId);
     }
 
@@ -74,10 +74,10 @@ public class AdoptionApplicationDAO {
      * @throws SQLException e.g. if adopterId is not an existing user
      */
     public int addApplication(int adopterId, int petId, String applicationDetails) throws SQLException {
-        String sql = "INSERT INTO AdoptionApplications (adopter_id, pet_id, application_details) "
-                   + "SELECT ?, p.pet_id, ? FROM Pets p "
+        String sql = "INSERT INTO adoptionapplications (adopter_id, pet_id, application_details) "
+                   + "SELECT ?, p.pet_id, ? FROM pets p "
                    + "WHERE p.pet_id = ? AND p.listing_status = 'Approved' AND p.pet_status = 'Available' "
-                   + "AND NOT EXISTS (SELECT 1 FROM AdoptionApplications a "
+                   + "AND NOT EXISTS (SELECT 1 FROM adoptionapplications a "
                    + "                WHERE a.adopter_id = ? AND a.pet_id = p.pet_id)";
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -102,7 +102,7 @@ public class AdoptionApplicationDAO {
      */
     public boolean updateApplicationStatus(int applicationId, String status) throws SQLException {
         Status.require(Status.APPLICATION, status, "application status");
-        String sql = "UPDATE AdoptionApplications SET status = ? WHERE application_id = ?";
+        String sql = "UPDATE adoptionapplications SET status = ? WHERE application_id = ?";
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, status);
@@ -113,7 +113,7 @@ public class AdoptionApplicationDAO {
 
     /** Returns true if deleted, false if no such application. */
     public boolean deleteApplication(int applicationId) throws SQLException {
-        String sql = "DELETE FROM AdoptionApplications WHERE application_id = ?";
+        String sql = "DELETE FROM adoptionapplications WHERE application_id = ?";
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, applicationId);
