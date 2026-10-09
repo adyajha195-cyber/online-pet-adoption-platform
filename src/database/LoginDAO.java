@@ -5,101 +5,34 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * Handles user login by checking email and password
- * against the Users table.
- */
+import model.User;
+
+/** Checks an email + password against the Users table. */
 public class LoginDAO {
 
-    public void login(String email, String password) {
-
-        String sql = "SELECT * FROM Users WHERE email = ? AND password = ?";
-
-        try {
-
-            Connection connection = DatabaseConnection.getConnection();
-
-            PreparedStatement statement =
-                connection.prepareStatement(sql);
-
-            statement.setString(1, email);
-            statement.setString(2, password);
-
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-
-                System.out.println("Login successful!");
-                System.out.println("User ID: " + result.getInt("user_id"));
-                System.out.println("Name: " + result.getString("name"));
-                System.out.println("Role: " + result.getString("role"));
-
-            } else {
-
-                System.out.println("Invalid email or password.");
-
+    /** Returns the logged-in user, or null if the email/password is wrong. */
+    public User login(String email, String password) throws SQLException {
+        String sql = "SELECT user_id, name, email, role, contact, address, city, state "
+                   + "FROM Users WHERE email = ? AND password = ?";
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setString(2, password);
+            try (ResultSet r = ps.executeQuery()) {
+                if (!r.next()) {
+                    return null;
+                }
+                return new User(
+                    r.getInt("user_id"), r.getString("name"), r.getString("email"),
+                    r.getString("role"), r.getString("contact"), r.getString("address"),
+                    r.getString("city"), r.getString("state"));
             }
-
-            result.close();
-            statement.close();
-
-            DatabaseConnection.closeConnection(connection);
-
-        } catch (SQLException e) {
-
-            e.printStackTrace();
         }
     }
 
-
-    // Used by the backend/service layer during integration
-    public Object[] getLoggedInUser(String email, String password) {
-
-        String sql =
-            "SELECT user_id, name, role " +
-            "FROM Users " +
-            "WHERE email = ? AND password = ?";
-
-        try {
-
-            Connection connection =
-                DatabaseConnection.getConnection();
-
-            PreparedStatement statement =
-                connection.prepareStatement(sql);
-
-            statement.setString(1, email);
-            statement.setString(2, password);
-
-            ResultSet result =
-                statement.executeQuery();
-
-            if (result.next()) {
-
-                Object[] user = {
-                    result.getInt("user_id"),
-                    result.getString("name"),
-                    result.getString("role")
-                };
-
-                result.close();
-                statement.close();
-
-                DatabaseConnection.closeConnection(connection);
-
-                return user;
-            }
-
-            result.close();
-            statement.close();
-
-            DatabaseConnection.closeConnection(connection);
-
-        } catch (SQLException e) {
-
-            e.printStackTrace();
-        }
-
-        return null;
+    /** Kept for the old backend code: returns {user_id, name, role} or null. Prefer login(). */
+    public Object[] getLoggedInUser(String email, String password) throws SQLException {
+        User u = login(email, password);
+        return (u == null) ? null : new Object[] { u.getUserId(), u.getName(), u.getRole() };
     }
 }

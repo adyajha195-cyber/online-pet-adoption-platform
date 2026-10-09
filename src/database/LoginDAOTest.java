@@ -1,14 +1,9 @@
 package database;
 
+/** Quick manual check: prints what the DAO returns. The real assertions are in DaoIntegrationTest. */
 public class LoginDAOTest {
 
-    public static void main(String[] args) {
-
-        LoginDAO loginDAO = new LoginDAO();
-
-       loginDAO.login(
-        "updated@petadoption.com",
-        "adopter123"
-);
+    public static void main(String[] args) throws Exception {
+        System.out.println(new LoginDAO().login("adopter@petadoption.com", "adopter123"));
     }
 }

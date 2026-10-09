@@ -8,12 +8,18 @@ import java.sql.SQLException;
  */
 public class DatabaseConnection {
 
-    private static final String URL =
-        "jdbc:mysql://localhost:3306/pet_adoption";
+    // Each of these can be overridden with an environment variable (DB_URL, DB_USER,
+    // DB_PASSWORD), so nobody has to edit this file or commit their real password.
+    private static final String URL = env("DB_URL", "jdbc:mysql://localhost:3306/pet_adoption");
 
-    private static final String USER = "root";
+    private static final String USER = env("DB_USER", "root");
 
-    private static final String PASSWORD = "Your_Password";
+    private static final String PASSWORD = env("DB_PASSWORD", "Your_Password");
+
+    private static String env(String name, String fallback) {
+        String value = System.getenv(name);
+        return (value == null || value.isEmpty()) ? fallback : value;
+    }
 
     public static Connection getConnection() throws SQLException {
 

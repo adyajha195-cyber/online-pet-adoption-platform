@@ -4,153 +4,120 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-/**
- * Handles database operations for adoption applications.
- */
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import model.AdoptionApplication;
+import model.Status;
+
+/** Database operations for adoption applications. Returns data / throws SQLException. */
 public class AdoptionApplicationDAO {
 
-    public void getAllApplications() {
+    private static final String COLUMNS =
+        "a.application_id, a.adopter_id, a.pet_id, a.application_details, a.application_date, a.status";
 
-        String sql = "SELECT * FROM AdoptionApplications";
+    private static AdoptionApplication map(ResultSet r) throws SQLException {
+        return new AdoptionApplication(
+            r.getInt("application_id"), r.getInt("adopter_id"), r.getInt("pet_id"),
+            r.getString("application_details"), r.getString("application_date"),
+            r.getString("status"));
+    }
 
-        try {
-            Connection connection = DatabaseConnection.getConnection();
-
-            PreparedStatement statement = connection.prepareStatement(sql);
-
-            ResultSet result = statement.executeQuery();
-
-            while (result.next()) {
-
-                System.out.println(
-                    result.getInt("application_id") + " | " +
-                    result.getInt("adopter_id") + " | " +
-                    result.getInt("pet_id") + " | " +
-                    result.getString("application_details") + " | " +
-                    result.getString("application_date") + " | " +
-                    result.getString("status")
-                );
+    private List<AdoptionApplication> query(String sql, int param) throws SQLException {
+        List<AdoptionApplication> list = new ArrayList<>();
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            if (sql.contains("?")) {
+                ps.setInt(1, param);
             }
-
-            result.close();
-            statement.close();
-            DatabaseConnection.closeConnection(connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
+            try (ResultSet r = ps.executeQuery()) {
+                while (r.next()) {
+                    list.add(map(r));
+                }
+            }
         }
-    }   public void getApplicationById(int applicationId) {
-
-    String sql = "SELECT * FROM AdoptionApplications WHERE application_id = ?";
-
-    try {
-        Connection connection = DatabaseConnection.getConnection();
-
-        PreparedStatement statement = connection.prepareStatement(sql);
-
-        statement.setInt(1, applicationId);
-
-        ResultSet result = statement.executeQuery();
-
-        if (result.next()) {
-
-            System.out.println(
-                result.getInt("application_id") + " | " +
-                result.getInt("adopter_id") + " | " +
-                result.getInt("pet_id") + " | " +
-                result.getString("application_details") + " | " +
-                result.getString("application_date") + " | " +
-                result.getString("status")
-            );
-
-        } else {
-            System.out.println("Application not found.");
-        }
-
-        result.close();
-        statement.close();
-        DatabaseConnection.closeConnection(connection);
-
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return list;
     }
-}   public void addApplication(int adopterId, int petId, String applicationDetails) {
 
-    String sql = "INSERT INTO AdoptionApplications " +
-                 "(adopter_id, pet_id, application_details) " +
-                 "VALUES (?, ?, ?)";
-
-    try {
-        Connection connection = DatabaseConnection.getConnection();
-
-        PreparedStatement statement = connection.prepareStatement(sql);
-
-        statement.setInt(1, adopterId);
-        statement.setInt(2, petId);
-        statement.setString(3, applicationDetails);
-
-        int rows = statement.executeUpdate();
-
-        if (rows > 0) {
-            System.out.println("Application added successfully!");
-        }
-
-        statement.close();
-        DatabaseConnection.closeConnection(connection);
-    } catch (SQLException e) {
-        e.printStackTrace();
+    public List<AdoptionApplication> getAllApplications() throws SQLException {
+        return query("SELECT " + COLUMNS + " FROM AdoptionApplications a ORDER BY a.application_id", 0);
     }
-}   public void updateApplicationStatus(int applicationId, String status) {
 
-    String sql = "UPDATE AdoptionApplications " +
-                 "SET status = ? " +
-                 "WHERE application_id = ?";
-
-    try {
-        Connection connection = DatabaseConnection.getConnection();
-
-        PreparedStatement statement = connection.prepareStatement(sql);
-
-        statement.setString(1, status);
-        statement.setInt(2, applicationId);
-
-        int rows = statement.executeUpdate();
-
-        if (rows > 0) {
-            System.out.println("Application status updated successfully!");
-        } else {
-            System.out.println("Application not found.");
-        }
-
-        statement.close();
-        DatabaseConnection.closeConnection(connection);
-
-    } catch (SQLException e) {
-        e.printStackTrace();
+    /** Returns the application, or null if no application has this id. */
+    public AdoptionApplication getApplicationById(int applicationId) throws SQLException {
+        List<AdoptionApplication> found = query(
+            "SELECT " + COLUMNS + " FROM AdoptionApplications a WHERE a.application_id = ?", applicationId);
+        return found.isEmpty() ? null : found.get(0);
     }
-}   public void deleteApplication(int applicationId) {
 
-    String sql = "DELETE FROM AdoptionApplications WHERE application_id = ?";
-
-    try {
-        Connection connection = DatabaseConnection.getConnection();
-
-        PreparedStatement statement = connection.prepareStatement(sql);
-
-        statement.setInt(1, applicationId);
-
-        int rows = statement.executeUpdate();
-
-        if (rows > 0) {
-            System.out.println("Application deleted successfully!");
-        } else {
-            System.out.println("Application not found.");
-        }
-
-        statement.close();
-        DatabaseConnection.closeConnection(connection);
-
-    } catch (SQLException e) {
-        e.printStackTrace();
+    /** Adopter's "track my applications" / adoption history screen. */
+    public List<AdoptionApplication> getApplicationsByAdopter(int adopterId) throws SQLException {
+        return query("SELECT " + COLUMNS + " FROM AdoptionApplications a "
+                   + "WHERE a.adopter_id = ? ORDER BY a.application_id", adopterId);
     }
-}
+
+    /** Shelter's "view applications" screen: applications for pets this shelter owns. */
+    public List<AdoptionApplication> getApplicationsByShelter(int shelterUserId) throws SQLException {
+        return query("SELECT " + COLUMNS + " FROM AdoptionApplications a "
+                   + "JOIN Pets p ON a.pet_id = p.pet_id "
+                   + "WHERE p.shelter_user_id = ? ORDER BY a.application_id", shelterUserId);
+    }
+
+    /**
+     * Submits an application. The rules are checked and the row inserted in ONE statement,
+     * so two people clicking at once can't sneak past them:
+     *   - the pet must exist, have listing_status Approved and pet_status Available
+     *   - the same adopter can't apply for the same pet twice
+     *
+     * @return the new application_id, or -1 if a rule above blocked it
+     * @throws SQLException e.g. if adopterId is not an existing user
+     */
+    public int addApplication(int adopterId, int petId, String applicationDetails) throws SQLException {
+        String sql = "INSERT INTO AdoptionApplications (adopter_id, pet_id, application_details) "
+                   + "SELECT ?, p.pet_id, ? FROM Pets p "
+                   + "WHERE p.pet_id = ? AND p.listing_status = 'Approved' AND p.pet_status = 'Available' "
+                   + "AND NOT EXISTS (SELECT 1 FROM AdoptionApplications a "
+                   + "                WHERE a.adopter_id = ? AND a.pet_id = p.pet_id)";
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, adopterId);
+            ps.setString(2, applicationDetails);
+            ps.setInt(3, petId);
+            ps.setInt(4, adopterId);
+            if (ps.executeUpdate() == 0) {
+                return -1;
+            }
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                keys.next();
+                return keys.getInt(1);
+            }
+        }
+    }
+
+    /**
+     * @param status must be Pending, Approved or Rejected
+     * @return true if updated, false if no such application
+     * @throws IllegalArgumentException for any other status
+     */
+    public boolean updateApplicationStatus(int applicationId, String status) throws SQLException {
+        Status.require(Status.APPLICATION, status, "application status");
+        String sql = "UPDATE AdoptionApplications SET status = ? WHERE application_id = ?";
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, applicationId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /** Returns true if deleted, false if no such application. */
+    public boolean deleteApplication(int applicationId) throws SQLException {
+        String sql = "DELETE FROM AdoptionApplications WHERE application_id = ?";
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, applicationId);
+            return ps.executeUpdate() > 0;
+        }
+    }
 }

@@ -5,85 +5,30 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/** Simple counts for the admin / shelter statistics screens. Throws SQLException on DB errors. */
 public class PlatformAnalyticsDAO {
 
-    public int getTotalUsers() {
-
-        String sql = "SELECT COUNT(*) FROM Users";
-
-        try {
-            Connection connection = DatabaseConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                return result.getInt(1);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
+    private int count(String sql) throws SQLException {
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet r = ps.executeQuery()) {
+            return r.next() ? r.getInt(1) : 0;
         }
-
-        return 0;
     }
 
-    public int getTotalPets() {
-
-        String sql = "SELECT COUNT(*) FROM Pets";
-
-        try {
-            Connection connection = DatabaseConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                return result.getInt(1);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return 0;
+    public int getTotalUsers() throws SQLException {
+        return count("SELECT COUNT(*) FROM Users");
     }
 
-    public int getTotalApplications() {
-
-        String sql = "SELECT COUNT(*) FROM AdoptionApplications";
-
-        try {
-            Connection connection = DatabaseConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                return result.getInt(1);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return 0;
+    public int getTotalPets() throws SQLException {
+        return count("SELECT COUNT(*) FROM Pets");
     }
 
-    public int getApprovedApplications() {
+    public int getTotalApplications() throws SQLException {
+        return count("SELECT COUNT(*) FROM AdoptionApplications");
+    }
 
-        String sql = "SELECT COUNT(*) FROM AdoptionApplications WHERE status = 'Approved'";
-
-        try {
-            Connection connection = DatabaseConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                return result.getInt(1);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return 0;
+    public int getApprovedApplications() throws SQLException {
+        return count("SELECT COUNT(*) FROM AdoptionApplications WHERE status = 'Approved'");
     }
 }

@@ -4,155 +4,104 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-/**
- * Handles database operations for messages between users.
- */
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import model.Message;
+import model.Status;
+
+/** Database operations for messages between shelters and adopters. */
 public class MessageDAO {
 
-    public void getAllMessages() {
+    private static final String COLUMNS =
+        "message_id, sender_id, receiver_id, message_text, send_at, delivery_status";
 
-        String sql = "SELECT * FROM Messages";
+    private static Message map(ResultSet r) throws SQLException {
+        return new Message(
+            r.getInt("message_id"), r.getInt("sender_id"), r.getInt("receiver_id"),
+            r.getString("message_text"), r.getString("send_at"), r.getString("delivery_status"));
+    }
 
-        try {
-            Connection connection = DatabaseConnection.getConnection();
-
-            PreparedStatement statement =
-                    connection.prepareStatement(sql);
-
-            ResultSet result = statement.executeQuery();
-
-            while (result.next()) {
-
-                System.out.println(
-                    result.getInt("message_id") + " | " +
-                    result.getInt("sender_id") + " | " +
-                    result.getInt("receiver_id") + " | " +
-                    result.getString("message_text") + " | " +
-                    result.getString("send_at") + " | " +
-                    result.getString("delivery_status")
-                );
+    public List<Message> getAllMessages() throws SQLException {
+        List<Message> list = new ArrayList<>();
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement("SELECT " + COLUMNS + " FROM Messages ORDER BY message_id");
+             ResultSet r = ps.executeQuery()) {
+            while (r.next()) {
+                list.add(map(r));
             }
+        }
+        return list;
+    }
 
-            result.close();
-            statement.close();
-            DatabaseConnection.closeConnection(connection);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
+    /** Returns the message, or null if no message has this id. */
+    public Message getMessageById(int messageId) throws SQLException {
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement("SELECT " + COLUMNS + " FROM Messages WHERE message_id = ?")) {
+            ps.setInt(1, messageId);
+            try (ResultSet r = ps.executeQuery()) {
+                return r.next() ? map(r) : null;
+            }
         }
     }
-        public void getMessageById(int messageId) {
 
-    String sql = "SELECT * FROM Messages WHERE message_id = ?";
-
-    try {
-        Connection connection = DatabaseConnection.getConnection();
-
-        PreparedStatement statement =
-                connection.prepareStatement(sql);
-
-        statement.setInt(1, messageId);
-
-        ResultSet result = statement.executeQuery();
-
-        if (result.next()) {
-
-            System.out.println(
-                result.getInt("message_id") + " | " +
-                result.getInt("sender_id") + " | " +
-                result.getInt("receiver_id") + " | " +
-                result.getString("message_text") + " | " +
-                result.getString("send_at") + " | " +
-                result.getString("delivery_status")
-            );
-
-        } else {
-            System.out.println("Message not found.");
+    /** The chat between two users, oldest message first. */
+    public List<Message> getConversation(int userA, int userB) throws SQLException {
+        String sql = "SELECT " + COLUMNS + " FROM Messages "
+                   + "WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) "
+                   + "ORDER BY send_at, message_id";
+        List<Message> list = new ArrayList<>();
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, userA);
+            ps.setInt(2, userB);
+            ps.setInt(3, userB);
+            ps.setInt(4, userA);
+            try (ResultSet r = ps.executeQuery()) {
+                while (r.next()) {
+                    list.add(map(r));
+                }
+            }
         }
-
-        result.close();
-        statement.close();
-        DatabaseConnection.closeConnection(connection);
-
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return list;
     }
-}   public void addMessage(int senderId, int receiverId, String messageText) {
 
-    String sql = "INSERT INTO Messages " +
-                 "(sender_id, receiver_id, message_text) " +
-                 "VALUES (?, ?, ?)";
-
-    try {
-        Connection connection = DatabaseConnection.getConnection();
-
-        PreparedStatement statement =
-                connection.prepareStatement(sql);
-
-        statement.setInt(1, senderId);
-        statement.setInt(2, receiverId);
-        statement.setString(3, messageText);
-
-        int rows = statement.executeUpdate();
-
-        if (rows > 0) {
-            System.out.println("Message added successfully!");
+    /**
+     * Sends a message and returns the new message_id.
+     * @throws SQLException if sender or receiver is not an existing user
+     */
+    public int addMessage(int senderId, int receiverId, String messageText) throws SQLException {
+        String sql = "INSERT INTO Messages (sender_id, receiver_id, message_text) VALUES (?, ?, ?)";
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, senderId);
+            ps.setInt(2, receiverId);
+            ps.setString(3, messageText);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                keys.next();
+                return keys.getInt(1);
+            }
         }
-
-        statement.close();
-        DatabaseConnection.closeConnection(connection);
-    } catch (SQLException e) {
-        e.printStackTrace();
     }
-}   public void updateDeliveryStatus(int messageId, String status) {
 
-    String sql = "UPDATE Messages SET delivery_status = ? WHERE message_id = ?";
-
-    try {
-        Connection connection = DatabaseConnection.getConnection();
-
-        PreparedStatement statement = connection.prepareStatement(sql);
-
-        statement.setString(1, status);
-        statement.setInt(2, messageId);
-
-        int rows = statement.executeUpdate();
-
-        if (rows > 0) {
-            System.out.println("Message delivery status updated successfully!");
-        } else {
-            System.out.println("Message not found.");
+    /** status must be Sent, Delivered or Read. Returns true if updated. */
+    public boolean updateDeliveryStatus(int messageId, String status) throws SQLException {
+        Status.require(Status.DELIVERY, status, "delivery status");
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement("UPDATE Messages SET delivery_status = ? WHERE message_id = ?")) {
+            ps.setString(1, status);
+            ps.setInt(2, messageId);
+            return ps.executeUpdate() > 0;
         }
-
-        statement.close();
-        DatabaseConnection.closeConnection(connection);
-    } catch (SQLException e) {
-        e.printStackTrace();
     }
-}       
-        public void deleteMessage(int messageId) {
 
-    String sql = "DELETE FROM Messages WHERE message_id = ?";
-
-    try {
-        Connection connection = DatabaseConnection.getConnection();
-
-        PreparedStatement statement = connection.prepareStatement(sql);
-
-        statement.setInt(1, messageId);
-
-        int rows = statement.executeUpdate();
-
-        if (rows > 0) {
-            System.out.println("Message deleted successfully!");
-        } else {
-            System.out.println("Message not found.");
+    public boolean deleteMessage(int messageId) throws SQLException {
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement("DELETE FROM Messages WHERE message_id = ?")) {
+            ps.setInt(1, messageId);
+            return ps.executeUpdate() > 0;
         }
-
-        statement.close();
-        DatabaseConnection.closeConnection(connection);
-    } catch (SQLException e) {
-        e.printStackTrace();
     }
-}
 }
