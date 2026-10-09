@@ -63,9 +63,10 @@ The SQL script used to create and populate the database is available here:
 1. Install MySQL Server and MySQL Workbench.
 2. Clone this repository.
 3. Open MySQL Workbench.
-4. Open the `sql/pet_adoption.sql` file from this project.
-5. Run the SQL script.
-6. This will create the `pet_adoption` database, its tables, and sample data.
+4. In the `DatabaseConnection.java` file replace the place holder "Your_Password" with your MySQL password. 
+5. Open the `sql/pet_adoption.sql` file from this project.
+6. Run the SQL script.
+7. This will create the `pet_adoption` database, its tables, and sample data.
 
 ## Running the Project
 
