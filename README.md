@@ -102,8 +102,92 @@ DAO methods return data (objects, lists, ids, booleans) and throw `SQLException`
 javac -cp lib/mysql-connector-j-26.7.0.jar -d out src/model/*.java src/database/*.java src/backend/*.java
 java -cp out:lib/mysql-connector-j-26.7.0.jar database.DaoIntegrationTest
 ```
-
 It prints PASS/FAIL for each check and cleans up after itself.
+
+
+An end-to-end desktop application built with **Java Swing (MVC), JDBC, and MySQL** for managing pet listings, user accounts, and adoption workflows across multiple user roles.
+
+##  User Roles & Login Credentials
+
+| Role        | Email                     | Password     | Primary Capabilities                                                          |
+| ----------- | ------------------------- | ------------ | ----------------------------------------------------------------------------- |
+| **Admin**   | `admin@petadoption.com`   | `admin123`   | View platform-wide statistics, manage users, approve or reject pet listings   |
+| **Shelter** | `shelter@petadoption.com` | `shelter123` | Create pet listings, review incoming applications for listed pets             |
+| **Adopter** | `adopter@petadoption.com` | `adopter123` | Browse available pets, submit adoption applications, track application status |
+
+**Note:** These are demo login credentials for testing the application.
+
+
+## ⚙️ Requirements & Initial Setup
+
+1. **Prerequisites:** Java Development Kit (JDK 17 or later) and MySQL Server 8.0 or later.
+2. **JDBC Driver:** Ensure the MySQL Connector/J `.jar` file is placed inside the `lib/` directory.
+3. **Database Setup:** Create the `pet_adoption` database and execute the SQL scripts provided in the `sql/` directory.
+4. **Database Credentials:** Configure your MySQL username and password in `src/database/DatabaseConnection.java`, or use the environment variables `DB_USER` and `DB_PASSWORD` if the application supports them.
+
+##  How to Launch the Application
+
+Open PowerShell in the project root directory and run:
+
+```powershell
+javac -d out -cp "lib/*" (Get-ChildItem -Recurse -Filter *.java src).FullName
+if ($?) {
+    java -cp "out;lib/*" frontend.MainFrame
+}
+```
+
+Make sure MySQL is running and the database connection settings are correct before launching the application.
+
+##  Frontend User Guide & Workflows
+
+### 1. Adopter Workflow — Browsing & Applying
+
+1. Launch the application and log in using the demo Adopter credentials: `adopter@petadoption.com` / `adopter123`.
+2. Browse the available pets on the User Dashboard.
+3. Select a pet and click **Adopt** to open the application dialog.
+4. Enter the reason for adoption and click **Submit Application**.
+5. Check the confirmation message to verify whether the application was submitted successfully.
+
+### 2. Shelter Workflow — Managing Pets & Applications
+
+1. Log in using the demo Shelter credentials: `shelter@petadoption.com` / `shelter123`.
+2. Access the available pet-management and adoption-application features.
+3. Review incoming applications and update their status to **Approved** or **Rejected**, if these actions are enabled in the current implementation.
+
+### 3. Admin Workflow — Platform Management
+
+1. Log in using the demo Admin credentials: `admin@petadoption.com` / `admin123`.
+2. Open the Admin Dashboard.
+3. Review the available platform statistics and user-management features.
+4. Review pet listings and approve or reject them, where supported by the application.
+
+##  Resetting Test Data & Re-testing
+
+To test a fresh adoption application, you may need to clear the existing application records.
+
+1. **Stop the application:** Close the GUI window or stop the running process in PowerShell.
+
+2. **Clear the application records:** Run the following command if you intend to delete all adoption applications from the test database.
+
+   ```powershell
+   & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p -e "USE pet_adoption; DELETE FROM adoptionapplications;"
+   ```
+
+   Enter your MySQL root password when prompted. Adjust the MySQL executable path if it differs on your system.
+
+3. **Relaunch the application:** Run the compilation and launch commands again.
+
+4. **Test the workflow:** Log in as an Adopter and submit a new application.
+
+**Warning:** The deletion command removes every record from `adoptionapplications`. Use it only with test data, and back up any records you need to keep.
+
+##  Notes
+
+* The demo credentials are intended for testing, not production use.
+* Ensure that the database schema, Java classes, and documented workflows are consistent.
+* Document only the features that are implemented and working in the current version.
+
+
 
 ## Project Structure
 
