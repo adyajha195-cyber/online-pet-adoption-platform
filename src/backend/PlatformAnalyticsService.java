@@ -12,3 +12,4 @@ public interface PlatformAnalyticsService {
 
     int getApprovedApplications() throws SQLException;
 }
+
