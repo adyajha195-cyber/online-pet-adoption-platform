@@ -2,13 +2,13 @@ package backend;
 
 import java.sql.SQLException;
 import java.util.List;
-import model.Settings;
+import model.Setting;
 
 public interface SettingsService {
 
-    List<Settings> getAllSettings() throws SQLException;
+    List<Setting> getAllSettings() throws SQLException;
 
-    Settings getSettingById(int settingId) throws SQLException;
+    Setting getSettingById(int settingId) throws SQLException;
 
     String getSettingValue(String settingName) throws SQLException;
 
