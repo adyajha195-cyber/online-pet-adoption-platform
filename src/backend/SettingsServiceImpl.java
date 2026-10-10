@@ -2,8 +2,9 @@ package backend;
 
 import database.SettingsDAO;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
-import model.Settings;
+import model.Setting;
 
 public class SettingsServiceImpl implements SettingsService {
 
@@ -14,12 +15,12 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     @Override
-    public List<Settings> getAllSettings() throws SQLException {
+    public List<Setting> getAllSettings() throws SQLException {
         return settingsDAO.getAllSettings();
     }
 
     @Override
-    public Settings getSettingById(int settingId) throws SQLException {
+    public Setting getSettingById(int settingId) throws SQLException {
 
         if (settingId <= 0) {
             return null;
@@ -32,11 +33,7 @@ public class SettingsServiceImpl implements SettingsService {
     public String getSettingValue(String settingName)
             throws SQLException {
 
-        if (settingName == null || settingName.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Setting name cannot be empty."
-            );
-        }
+        requireName(settingName);
 
         return settingsDAO.getSettingValue(settingName.trim());
     }
@@ -45,22 +42,17 @@ public class SettingsServiceImpl implements SettingsService {
     public int addSetting(String settingName, String settingValue)
             throws SQLException {
 
-        if (settingName == null || settingName.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Setting name cannot be empty."
+        requireName(settingName);
+        requireValue(settingValue);
+
+        try {
+            return settingsDAO.addSetting(settingName.trim(), settingValue);
+        } catch (SQLIntegrityConstraintViolationException e) {
+            throw new ServiceException(
+                    "A setting named '" + settingName.trim()
+                            + "' already exists.", e
             );
         }
-
-        if (settingValue == null) {
-            throw new IllegalArgumentException(
-                    "Setting value cannot be null."
-            );
-        }
-
-        return settingsDAO.addSetting(
-                settingName.trim(),
-                settingValue
-        );
     }
 
     @Override
@@ -71,39 +63,49 @@ public class SettingsServiceImpl implements SettingsService {
     ) throws SQLException {
 
         if (settingId <= 0) {
-            throw new IllegalArgumentException(
-                    "Invalid setting ID."
-            );
+            throw new IllegalArgumentException("Invalid setting ID.");
         }
 
-        if (settingName == null || settingName.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Setting name cannot be empty."
+        requireName(settingName);
+        requireValue(settingValue);
+
+        try {
+            return settingsDAO.updateSetting(
+                    settingId,
+                    settingName.trim(),
+                    settingValue
+            );
+        } catch (SQLIntegrityConstraintViolationException e) {
+            throw new ServiceException(
+                    "A setting named '" + settingName.trim()
+                            + "' already exists.", e
             );
         }
-
-        if (settingValue == null) {
-            throw new IllegalArgumentException(
-                    "Setting value cannot be null."
-            );
-        }
-
-        return settingsDAO.updateSetting(
-                settingId,
-                settingName.trim(),
-                settingValue
-        );
     }
 
     @Override
     public boolean deleteSetting(int settingId) throws SQLException {
 
         if (settingId <= 0) {
-            throw new IllegalArgumentException(
-                    "Invalid setting ID."
-            );
+            throw new IllegalArgumentException("Invalid setting ID.");
         }
 
         return settingsDAO.deleteSetting(settingId);
+    }
+
+    private static void requireName(String settingName) {
+        if (settingName == null || settingName.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Setting name cannot be empty."
+            );
+        }
+    }
+
+    private static void requireValue(String settingValue) {
+        if (settingValue == null) {
+            throw new IllegalArgumentException(
+                    "Setting value cannot be null."
+            );
+        }
     }
 }
