@@ -181,6 +181,24 @@ To test a fresh adoption application, you may need to clear the existing applica
 
 **Warning:** The deletion command removes every record from `adoptionapplications`. Use it only with test data, and back up any records you need to keep.
 
+## Backend & Integration
+
+The backend is developed in Java using Object-Oriented Programming (OOP) principles to handle the application's business logic and connect the frontend with the database layer.
+
+### Backend Features
+- Service interfaces and implementations for Login, Users, Pets, Adoption Applications, and Messages.
+- Input validation and exception handling.
+- Use of interfaces, inheritance, and polymorphism to maintain modular and reusable code.
+- Integration with existing DAO classes for database operations.
+
+### Integration
+The backend acts as a bridge between the Java Swing frontend and the existing DAO layer. Services process requests, apply business rules, and delegate database operations to the DAOs.
+
+**Architecture:** `Java Swing Frontend → Backend Services → DAO Layer → MySQL Database`
+
+### Current Progress
+Backend service classes have been developed, and integration with the existing database layer is in progress. Testing is being carried out to verify communication between components and ensure the application functions correctly.
+
 ##  Notes
 
 * The demo credentials are intended for testing, not production use.
