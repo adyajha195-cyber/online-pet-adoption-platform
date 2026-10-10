@@ -1,18 +1,20 @@
 package backend;
 
 import database.MessageDAO;
-import model.Message;
-import model.Status;
-
+import database.UserDAO;
 import java.sql.SQLException;
 import java.util.List;
+import model.Message;
+import model.Status;
 
 public class MessageServiceImpl implements MessageService {
 
     private final MessageDAO messageDAO;
+    private final UserDAO userDAO;
 
     public MessageServiceImpl() {
         this.messageDAO = new MessageDAO();
+        this.userDAO = new UserDAO();
     }
 
     @Override
@@ -35,9 +37,7 @@ public class MessageServiceImpl implements MessageService {
             throws SQLException {
 
         if (userA <= 0 || userB <= 0) {
-            throw new IllegalArgumentException(
-                    "Invalid user ID."
-            );
+            throw new IllegalArgumentException("Invalid user ID.");
         }
 
         return messageDAO.getConversation(userA, userB);
@@ -51,15 +51,11 @@ public class MessageServiceImpl implements MessageService {
     ) throws SQLException {
 
         if (senderId <= 0) {
-            throw new IllegalArgumentException(
-                    "Invalid sender ID."
-            );
+            throw new IllegalArgumentException("Invalid sender ID.");
         }
 
         if (receiverId <= 0) {
-            throw new IllegalArgumentException(
-                    "Invalid receiver ID."
-            );
+            throw new IllegalArgumentException("Invalid receiver ID.");
         }
 
         if (senderId == receiverId) {
@@ -69,9 +65,16 @@ public class MessageServiceImpl implements MessageService {
         }
 
         if (messageText == null || messageText.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Message cannot be empty."
-            );
+            throw new IllegalArgumentException("Message cannot be empty.");
+        }
+
+        // Friendly errors instead of a raw foreign-key SQLException
+        if (userDAO.getUserById(senderId) == null) {
+            throw new ServiceException("Sender does not exist.");
+        }
+
+        if (userDAO.getUserById(receiverId) == null) {
+            throw new ServiceException("Receiver does not exist.");
         }
 
         return messageDAO.addMessage(
@@ -92,28 +95,19 @@ public class MessageServiceImpl implements MessageService {
         }
 
         try {
-            Status.require(
-                    Status.DELIVERY,
-                    status,
-                    "delivery status"
-            );
+            Status.require(Status.DELIVERY, status, "delivery status");
         } catch (IllegalArgumentException e) {
             return false;
         }
 
-        return messageDAO.updateDeliveryStatus(
-                messageId,
-                status
-        );
+        return messageDAO.updateDeliveryStatus(messageId, status);
     }
 
     @Override
     public boolean deleteMessage(int messageId) throws SQLException {
 
         if (messageId <= 0) {
-            throw new IllegalArgumentException(
-                    "Invalid message ID."
-            );
+            throw new IllegalArgumentException("Invalid message ID.");
         }
 
         return messageDAO.deleteMessage(messageId);
