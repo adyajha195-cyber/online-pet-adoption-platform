@@ -92,6 +92,13 @@ public class AdoptionApplicationServiceImpl
     }
 
     @Override
+    public List<AdoptionApplication> getAllApplications()
+            throws SQLException {
+
+        return applicationDAO.getAllApplications();
+    }
+
+    @Override
     public AdoptionApplication getApplicationById(int applicationId)
             throws SQLException {
 
@@ -146,12 +153,16 @@ public class AdoptionApplicationServiceImpl
             String status
     ) throws SQLException {
 
-        if (applicationId <= 0) {
-            throw new IllegalArgumentException("Invalid application ID.");
+        if (applicationId <= 0 || status == null) {
+            return false;
         }
 
-        // Throws IllegalArgumentException, same as the other services
-        Status.require(Status.APPLICATION, status, "application status");
+        // Invalid status values are rejected with false, not an exception
+        try {
+            Status.require(Status.APPLICATION, status, "application status");
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
 
         return applicationDAO.updateApplicationStatus(
                 applicationId,
