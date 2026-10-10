@@ -9,7 +9,7 @@ public interface UserService {
     // Retrieve all users
     List<User> getAllUsers() throws SQLException;
 
-    // Retrieve a user by ID
+    // Retrieve a user by ID (null if not found)
     User getUserById(int userId) throws SQLException;
 
     // Register a new user
@@ -38,4 +38,4 @@ public interface UserService {
 
     // Delete a user
     boolean deleteUser(int userId) throws SQLException;
-}ṇ
+}
