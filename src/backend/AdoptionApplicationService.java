@@ -6,29 +6,39 @@ import model.AdoptionApplication;
 
 public interface AdoptionApplicationService {
 
-    /**
-     * @return true if the application was created; false if the pet does
-     *         not exist, is not an approved/available listing, or the
-     *         adopter has already applied for it.
-     */
+    // Submit a new adoption application with no details text
+    // (returns false if the pet is not available or already applied for)
     boolean submitApplication(int adopterId, int petId)
             throws SQLException;
 
-    boolean submitApplication(int adopterId, int petId, String details)
+    // Submit a new adoption application with the adopter's reason
+    boolean submitApplication(
+            int adopterId,
+            int petId,
+            String details
+    ) throws SQLException;
+
+    // Retrieve all adoption applications
+    List<AdoptionApplication> getAllApplications()
             throws SQLException;
 
+    // Retrieve an application by its ID
     AdoptionApplication getApplicationById(int applicationId)
             throws SQLException;
 
+    // Retrieve applications submitted by an adopter
     List<AdoptionApplication> getApplicationsByAdopter(int adopterId)
             throws SQLException;
 
-    List<AdoptionApplication> getApplicationsByShelter(int shelterId)
+    // Retrieve applications associated with a shelter
+    List<AdoptionApplication> getApplicationsByShelter(int shelterUserId)
             throws SQLException;
 
+    // Retrieve the status of an application
     String getApplicationStatus(int applicationId)
             throws SQLException;
 
+    // Update an application's status
     boolean updateApplicationStatus(int applicationId, String status)
             throws SQLException;
 }
