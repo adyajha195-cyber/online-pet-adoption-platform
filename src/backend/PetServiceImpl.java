@@ -1,11 +1,11 @@
 package backend;
 
 import database.PetDAO;
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.List;
 import model.Pet;
 import model.Status;
-
-import java.sql.SQLException;
-import java.util.List;
 
 public class PetServiceImpl implements PetService {
 
@@ -40,9 +40,7 @@ public class PetServiceImpl implements PetService {
             throws SQLException {
 
         if (shelterId <= 0) {
-            throw new IllegalArgumentException(
-                "Invalid shelter ID."
-            );
+            throw new IllegalArgumentException("Invalid shelter ID.");
         }
 
         return petDAO.getPetsByShelter(shelterId);
@@ -70,43 +68,19 @@ public class PetServiceImpl implements PetService {
     ) throws SQLException {
 
         if (shelterId <= 0) {
-            throw new IllegalArgumentException(
-                "Invalid shelter ID."
-            );
+            throw new IllegalArgumentException("Invalid shelter ID.");
         }
 
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                "Pet name cannot be empty."
-            );
-        }
-
-        if (type == null || type.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                "Pet type cannot be empty."
-            );
-        }
-
-        if (breed == null || breed.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                "Pet breed cannot be empty."
-            );
-        }
-
-        if (age < 0) {
-            throw new IllegalArgumentException(
-                "Pet age cannot be negative."
-            );
-        }
+        validatePetFields(name, type, breed, age);
 
         return petDAO.addPet(
-            shelterId,
-            name.trim(),
-            type.trim(),
-            breed.trim(),
-            age,
-            description,
-            photo
+                shelterId,
+                name.trim(),
+                type.trim(),
+                breed.trim(),
+                age,
+                description,
+                photo
         );
     }
 
@@ -114,18 +88,31 @@ public class PetServiceImpl implements PetService {
     public boolean updatePet(Pet pet) throws SQLException {
 
         if (pet == null) {
-            throw new IllegalArgumentException(
-                "Pet cannot be null."
-            );
+            throw new IllegalArgumentException("Pet cannot be null.");
         }
 
         if (pet.getPetId() <= 0) {
-            throw new IllegalArgumentException(
-                "Invalid pet ID."
-            );
+            throw new IllegalArgumentException("Invalid pet ID.");
         }
 
-        return petDAO.updatePet(pet);
+        validatePetFields(
+                pet.getName(),
+                pet.getType(),
+                pet.getBreed(),
+                pet.getAge()
+        );
+
+        // PetDAO.updatePet takes individual fields, not a Pet object.
+        // Listing/pet status are changed only through their own methods.
+        return petDAO.updatePet(
+                pet.getPetId(),
+                pet.getName().trim(),
+                pet.getType().trim(),
+                pet.getBreed().trim(),
+                pet.getAge(),
+                pet.getDescription(),
+                pet.getPhoto()
+        );
     }
 
     @Override
@@ -135,16 +122,10 @@ public class PetServiceImpl implements PetService {
     ) throws SQLException {
 
         if (petId <= 0) {
-            throw new IllegalArgumentException(
-                "Invalid pet ID."
-            );
+            throw new IllegalArgumentException("Invalid pet ID.");
         }
 
-        Status.require(
-            Status.LISTING,
-            status,
-            "listing status"
-        );
+        Status.require(Status.LISTING, status, "listing status");
 
         return petDAO.updatePetListingStatus(petId, status);
     }
@@ -156,16 +137,10 @@ public class PetServiceImpl implements PetService {
     ) throws SQLException {
 
         if (petId <= 0) {
-            throw new IllegalArgumentException(
-                "Invalid pet ID."
-            );
+            throw new IllegalArgumentException("Invalid pet ID.");
         }
 
-        Status.require(
-            Status.PET,
-            status,
-            "pet status"
-        );
+        Status.require(Status.PET, status, "pet status");
 
         return petDAO.updatePetStatus(petId, status);
     }
@@ -174,11 +149,43 @@ public class PetServiceImpl implements PetService {
     public boolean deletePet(int petId) throws SQLException {
 
         if (petId <= 0) {
-            throw new IllegalArgumentException(
-                "Invalid pet ID."
-            );
+            throw new IllegalArgumentException("Invalid pet ID.");
         }
 
-        return petDAO.deletePet(petId);
+        try {
+            return petDAO.deletePet(petId);
+        } catch (SQLIntegrityConstraintViolationException e) {
+            throw new ServiceException(
+                    "This pet has adoption applications and cannot be "
+                            + "deleted.", e
+            );
+        }
+    }
+
+    // Shared validation for addPet / updatePet
+    private void validatePetFields(
+            String name,
+            String type,
+            String breed,
+            int age
+    ) {
+
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Pet name cannot be empty.");
+        }
+
+        if (type == null || type.trim().isEmpty()) {
+            throw new IllegalArgumentException("Pet type cannot be empty.");
+        }
+
+        if (breed == null || breed.trim().isEmpty()) {
+            throw new IllegalArgumentException("Pet breed cannot be empty.");
+        }
+
+        if (age < 0) {
+            throw new IllegalArgumentException(
+                    "Pet age cannot be negative."
+            );
+        }
     }
 }
