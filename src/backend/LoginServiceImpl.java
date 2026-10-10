@@ -1,9 +1,8 @@
 package backend;
 
 import database.LoginDAO;
-import model.User;
-
 import java.sql.SQLException;
+import model.User;
 
 public class LoginServiceImpl implements LoginService {
 
