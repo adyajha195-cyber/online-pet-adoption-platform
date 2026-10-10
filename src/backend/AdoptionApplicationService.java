@@ -1,25 +1,32 @@
 package backend;
 
+import model.AdoptionApplication;
+import java.sql.SQLException;
+import java.util.List;
+
 public interface AdoptionApplicationService {
 
-    /** Same as submitApplication(adopterId, petId, "") - kept so existing calls still compile. */
-    boolean submitApplication(int adopterId, int petId);
+    boolean submitApplication(int adopterId, int petId)
+            throws SQLException;
 
-    /**
-     * Submits an application.
-     * @return true if submitted; false if not allowed (pet not approved/available, or
-     *         this adopter already applied for this pet)
-     * @throws ServiceException if the database fails (e.g. adopterId doesn't exist, DB down)
-     */
-    boolean submitApplication(int adopterId, int petId, String applicationDetails);
+    boolean submitApplication(
+            int adopterId,
+            int petId,
+            String details
+    ) throws SQLException;
 
-    /**
-     * @param status Pending, Approved or Rejected
-     * @return true if updated; false if the application doesn't exist or status is invalid
-     * @throws ServiceException if the database fails
-     */
-    boolean updateApplicationStatus(int applicationId, String status);
+    AdoptionApplication getApplicationById(int applicationId)
+            throws SQLException;
 
-    /** @return the status, or null if the application doesn't exist */
-    String getApplicationStatus(int applicationId);
+    List<AdoptionApplication> getApplicationsByAdopter(int adopterId)
+            throws SQLException;
+
+    List<AdoptionApplication> getApplicationsByShelter(int shelterId)
+            throws SQLException;
+
+    String getApplicationStatus(int applicationId)
+            throws SQLException;
+
+    boolean updateApplicationStatus(int applicationId, String status)
+            throws SQLException;
 }
