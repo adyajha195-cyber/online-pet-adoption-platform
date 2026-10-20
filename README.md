@@ -1,258 +1,365 @@
 # Online Pet Adoption Platform
 
-## About the Project
+A Java desktop application for managing pet adoption workflows between adopters, animal shelters, and administrators. The project uses Java Swing for the graphical interface, Java service classes for business logic, JDBC for database connectivity, and MySQL for data storage.
 
-The Online Pet Adoption Platform is a Java project that aims to make the pet adoption process easier for shelters and people looking to adopt pets.
+Developed as a team project for third-semester Computer Science coursework.
 
-Shelters can add pets and manage adoption applications, while adopters can browse available pets, apply for adoption, and keep track of their applications. An admin is responsible for managing users, pet listings, system settings, and basic platform information.
+## Table of Contents
 
-The project is being developed as a team project for our 3rd semester.
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Database Design](#database-design)
+- [Prerequisites](#prerequisites)
+- [Setup and Configuration](#setup-and-configuration)
+- [Running the Application](#running-the-application)
+- [Running the Tests](#running-the-tests)
+- [Application Workflows](#application-workflows)
+- [Business Rules](#business-rules)
+- [Error Handling and Validation](#error-handling-and-validation)
+- [Security Notes](#security-notes)
+- [Team Contributions](#team-contributions)
+- [Academic Project](#academic-project)
 
-## Main Features
+## Project Overview
 
-### Admin
-- Manage users and their roles
-- Approve or reject pet listings
-- Manage system settings
-- View basic platform statistics
+The Online Pet Adoption Platform is designed to simplify the process of adopting pets by providing a centralized system for adopters, shelters, and administrators.
+
+Adopters can browse pets and submit adoption applications. Shelters can manage pet listings and review adoption requests. Administrators can manage users, moderate pet listings, configure system settings, and view platform information.
+
+The application follows a layered architecture to separate the graphical user interface, business logic, data-access operations, and database models.
+
+## Features
+
+### Administrator
+
+- Manage user accounts and roles.
+- Review pet listings and approve or reject submissions.
+- Manage system settings.
+- View platform statistics where supported by the current implementation.
 
 ### Shelter
-- Add and manage pet listings
-- View and manage adoption applications
-- Communicate with adopters
-- View adoption statistics
+
+- Add and manage pet listings.
+- View adoption applications associated with listed pets.
+- Review adoption requests and update their status where supported.
+- Communicate with adopters through the messaging functionality.
+- View adoption-related statistics where supported.
 
 ### Adopter
-- Browse available pets
-- Search for pets by type, breed, and location
-- Submit adoption applications
-- Track application status
-- Manage profile information
-- View adoption history
 
-## Technologies Used
+- Browse available pets.
+- View pet details.
+- Submit adoption applications.
+- Track application status where supported.
+- Manage profile information where supported.
+- Review adoption history where supported.
 
-- Java
-- Java Swing
-- MySQL
-- JDBC
-- Git and GitHub
+**Note:** The features above describe the project's functional scope. Refer to the current GUI and backend implementation to determine which workflows are fully operational and which are still being developed.
 
-## Database
+## Technology Stack
 
-We are using MySQL for storing the project data.
+| Technology | Purpose |
+|---|---|
+| Java (JDK 17 or later) | Application development |
+| Java Swing | Desktop graphical user interface |
+| JDBC | Communication between Java and MySQL |
+| MySQL 8.0 or later | Relational database |
+| MySQL Connector/J | JDBC driver |
+| Git and GitHub | Version control and team collaboration |
 
-The database is called:
+## Architecture
 
-`pet_adoption`
+The application separates presentation, business logic, database operations, and data models.
 
-The current database contains these tables:
+```text
+Java Swing Frontend
+        |
+        v
+Backend Services
+        |
+        v
+Data Access Objects (DAO)
+        |
+        v
+JDBC
+        |
+        v
+MySQL Database
+```
 
-- `Users` - stores admin, shelter, and adopter information
-- `Pets` - stores pet details and listing information
-- `AdoptionApplications` - stores adoption applications
-- `Messages` - stores messages between shelters and adopters
-- `Settings` - stores system settings
+### Frontend
 
-The SQL script used to create and populate the database is available here:
+The frontend contains the main application window, login screen, dashboards, pet cards, and adoption application dialog. Swing components provide the interface through which users interact with the platform.
+
+### Backend Services
+
+The backend contains service interfaces and implementations for operations such as login, user management, pet management, adoption applications, and messaging.
+
+Services coordinate application operations, apply business rules, validate inputs, and delegate database work to the DAO layer.
+
+### Data Access Layer
+
+The database package contains the JDBC connection utility and DAO classes responsible for database operations. DAOs execute SQL statements and return data to the service layer.
+
+### Model Layer
+
+The model package represents application entities and shared definitions used by the frontend, backend, and database layers.
+
+## Project Structure
+
+The following structure reflects the main packages used by the project. Individual files and additional packages may vary as development continues.
+
+```text
+online-pet-adoption-platform/
+|
+|-- src/
+|   |-- frontend/
+|   |   |-- MainFrame.java
+|   |   |-- LoginView.java
+|   |   |-- UserDashboardView.java
+|   |   |-- AdminDashboardView.java
+|   |   |-- PetCard.java
+|   |   |-- ApplicationFormDialog.java
+|   |   `-- UITheme.java
+|   |
+|   |-- backend/
+|   |   `-- Service interfaces and implementations
+|   |
+|   |-- database/
+|   |   |-- DatabaseConnection.java
+|   |   |-- DAO classes
+|   |   `-- DAO and integration tests
+|   |
+|   `-- model/
+|       `-- Application models and shared definitions
+|
+|-- sql/
+|   `-- pet_online_adoption.sql
+|
+|-- lib/
+|   `-- MySQL Connector/J
+|
+|-- README.md
+|-- .gitignore
+`-- .gitattributes
+```
+
+## Database Design
+
+The application uses a MySQL database named `pet_adoption`.
+
+The principal tables include:
+
+| Table | Purpose |
+|---|---|
+| `Users` | Stores user information and roles |
+| `Pets` | Stores pet details and listing status |
+| `AdoptionApplications` | Stores adoption requests and their statuses |
+| `Messages` | Stores messages between shelters and adopters |
+| `Settings` | Stores application settings |
+
+Primary keys and foreign keys maintain relationships between the tables. DAO classes provide the Java application with access to database records.
+
+The database creation and sample-data script is located at:
 
 `sql/pet_online_adoption.sql`
 
-## How to Set Up the Database
+**Important:** The SQL script drops and recreates the `pet_adoption` database. Running it again resets the database to the supplied sample data and can delete existing records. Back up any data you need before running it.
 
-1. Install MySQL Server and MySQL Workbench.
-2. Clone this repository.
-3. Open MySQL Workbench.
-4. Tell the app your MySQL password. Either set the `DB_PASSWORD` environment variable (recommended, so you never commit your password), or replace the placeholder "Your_Password" in `DatabaseConnection.java`. `DB_USER` and `DB_URL` can be overridden the same way.
-5. Open the `sql/pet_online_adoption.sql` file from this project.
-6. Run the SQL script.
-7. This will create the `pet_adoption` database, its tables, and sample data.
+## Prerequisites
 
-> The script drops and recreates `pet_adoption`, so running it again resets the database to the sample data.
+Before running the project, install or prepare:
 
-## Running the Project
+1. JDK 17 or later.
+2. MySQL Server 8.0 or later.
+3. MySQL Workbench or another MySQL client.
+4. MySQL Connector/J in the project's `lib/` directory.
+5. Git, if cloning the repository.
 
-The Java application will connect to the MySQL database using JDBC.
+## Setup and Configuration
 
-Before running the application, make sure:
+### 1. Clone the repository
 
-- MySQL Server is running.
-- The `pet_adoption` database has been created.
-- The MySQL username and password are correctly configured in the Java database connection code.
-- The MySQL JDBC Connector is added to the project.
-
-## Database rules (enforced by the database and the DAOs)
-
-- Roles: `Admin`, `Shelter`, `Adopter`
-- Listing status: `Pending`, `Approved`, `Rejected` - new pets start as `Pending`
-- Pet status: `Available`, `Adopted`
-- Application status: `Pending`, `Approved`, `Rejected`
-- Message delivery status: `Sent`, `Delivered`, `Read`
-- An adopter can only apply for a pet that is `Approved` and `Available`, and only once per pet
-- These strings live in `model.Status` - use the constants instead of typing the text
-
-DAO methods return data (objects, lists, ids, booleans) and throw `SQLException` on database errors. Invalid status/role strings throw `IllegalArgumentException`.
-
-## Running the Tests
-
-1. Run `sql/pet_online_adoption.sql` to get a fresh database.
-2. From the project folder (use `;` instead of `:` on Windows):
-
-```text
-javac -cp lib/mysql-connector-j-26.7.0.jar -d out src/model/*.java src/database/*.java src/backend/*.java
-java -cp out:lib/mysql-connector-j-26.7.0.jar database.DaoIntegrationTest
+```bash
+git clone https://github.com/adyajha195-cyber/online-pet-adoption-platform.git
+cd online-pet-adoption-platform
 ```
-It prints PASS/FAIL for each check and cleans up after itself.
 
+### 2. Configure the database
 
-An end-to-end desktop application built with **Java Swing (MVC), JDBC, and MySQL** for managing pet listings, user accounts, and adoption workflows across multiple user roles.
+Open MySQL Workbench and execute:
 
-##  User Roles & Login Credentials
+`sql/pet_online_adoption.sql`
 
-| Role        | Email                     | Password     | Primary Capabilities                                                          |
-| ----------- | ------------------------- | ------------ | ----------------------------------------------------------------------------- |
-| **Admin**   | `admin@petadoption.com`   | `admin123`   | View platform-wide statistics, manage users, approve or reject pet listings   |
-| **Shelter** | `shelter@petadoption.com` | `shelter123` | Create pet listings, review incoming applications for listed pets             |
-| **Adopter** | `adopter@petadoption.com` | `adopter123` | Browse available pets, submit adoption applications, track application status |
+This script creates the database, tables, relationships, and sample data.
 
-**Note:** These are demo login credentials for testing the application.
+### 3. Configure database credentials
 
+The database connection is managed by:
 
-## ⚙️ Requirements & Initial Setup
+`src/database/DatabaseConnection.java`
 
-1. **Prerequisites:** Java Development Kit (JDK 17 or later) and MySQL Server 8.0 or later.
-2. **JDBC Driver:** Ensure the MySQL Connector/J `.jar` file is placed inside the `lib/` directory.
-3. **Database Setup:** Create the `pet_adoption` database and execute the SQL scripts provided in the `sql/` directory.
-4. **Database Credentials:** Configure your MySQL username and password in `src/database/DatabaseConnection.java`, or use the environment variables `DB_USER` and `DB_PASSWORD` if the application supports them.
+Configure the database URL, username, and password for your local MySQL installation.
 
-##  How to Launch the Application
+Where supported by the connection class, environment variables can be used:
 
-Open PowerShell in the project root directory and run:
+- `DB_URL` — database connection URL.
+- `DB_USER` — MySQL username.
+- `DB_PASSWORD` — MySQL password.
+
+For example, in PowerShell:
+
+```powershell
+$env:DB_URL = "jdbc:mysql://localhost:3306/pet_adoption"
+$env:DB_USER = "root"
+$env:DB_PASSWORD = "your_local_mysql_password"
+```
+
+Replace the example password with your own local MySQL password. Do not commit real database credentials to GitHub.
+
+### 4. Verify the connector
+
+Ensure that the MySQL Connector/J `.jar` file is available inside `lib/`.
+
+The commands below use `lib/*`, so they do not depend on a particular connector filename.
+
+## Running the Application
+
+Open PowerShell in the project root directory.
+
+### Compile the Java source files
 
 ```powershell
 javac -d out -cp "lib/*" (Get-ChildItem -Recurse -Filter *.java src).FullName
+```
+
+### Launch the application
+
+If compilation succeeds, run:
+
+```powershell
 if ($?) {
     java -cp "out;lib/*" frontend.MainFrame
 }
 ```
 
-Make sure MySQL is running and the database connection settings are correct before launching the application.
+Before launching, make sure MySQL Server is running, the `pet_adoption` database exists, and the connection credentials are configured correctly.
 
-##  Frontend User Guide & Workflows
+If compilation fails, resolve the reported errors before launching the application.
 
-### 1. Adopter Workflow — Browsing & Applying
+## Running the Tests
 
-1. Launch the application and log in using the demo Adopter credentials: `adopter@petadoption.com` / `adopter123`.
-2. Browse the available pets on the User Dashboard.
-3. Select a pet and click **Adopt** to open the application dialog.
-4. Enter the reason for adoption and click **Submit Application**.
-5. Check the confirmation message to verify whether the application was submitted successfully.
+The project includes DAO tests and an integration test for checking database operations and service-layer behavior.
 
-### 2. Shelter Workflow — Managing Pets & Applications
+### 1. Prepare a test database
 
-1. Log in using the demo Shelter credentials: `shelter@petadoption.com` / `shelter123`.
-2. Access the available pet-management and adoption-application features.
-3. Review incoming applications and update their status to **Approved** or **Rejected**, if these actions are enabled in the current implementation.
+Execute `sql/pet_online_adoption.sql` against your local MySQL instance.
 
-### 3. Admin Workflow — Platform Management
+Use a test database only, because the script recreates the database and its sample data.
 
-1. Log in using the demo Admin credentials: `admin@petadoption.com` / `admin123`.
-2. Open the Admin Dashboard.
-3. Review the available platform statistics and user-management features.
-4. Review pet listings and approve or reject them, where supported by the application.
+### 2. Compile the model, database, and backend classes
 
-##  Resetting Test Data & Re-testing
+Run this command in PowerShell:
 
-To test a fresh adoption application, you may need to clear the existing application records.
-
-1. **Stop the application:** Close the GUI window or stop the running process in PowerShell.
-
-2. **Clear the application records:** Run the following command if you intend to delete all adoption applications from the test database.
-
-   ```powershell
-   & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p -e "USE pet_adoption; DELETE FROM adoptionapplications;"
-   ```
-
-   Enter your MySQL root password when prompted. Adjust the MySQL executable path if it differs on your system.
-
-3. **Relaunch the application:** Run the compilation and launch commands again.
-
-4. **Test the workflow:** Log in as an Adopter and submit a new application.
-
-**Warning:** The deletion command removes every record from `adoptionapplications`. Use it only with test data, and back up any records you need to keep.
-
-## Backend & Integration
-
-The backend is developed in Java using Object-Oriented Programming (OOP) principles to handle the application's business logic and connect the frontend with the database layer.
-
-### Backend Features
-- Service interfaces and implementations for Login, Users, Pets, Adoption Applications, and Messages.
-- Input validation and exception handling.
-- Use of interfaces, inheritance, and polymorphism to maintain modular and reusable code.
-- Integration with existing DAO classes for database operations.
-
-### Integration
-The backend acts as a bridge between the Java Swing frontend and the existing DAO layer. Services process requests, apply business rules, and delegate database operations to the DAOs.
-
-**Architecture:** `Java Swing Frontend → Backend Services → DAO Layer → MySQL Database`
-
-##  Notes
-
-* The demo credentials are intended for testing, not production use.
-* Ensure that the database schema, Java classes, and documented workflows are consistent.
-* Document only the features that are implemented and working in the current version.
-
-
-
-## Project Structure
-
-```text
-online-pet-adoption-platform/
-│
-├── src/
-│   ├── model/
-│   ├── backend/
-│   ├── database/
-│   └── gui/
-│
-├── sql/
-│   └── pet_online_adoption.sql
-│
-├── README.md
-└── .gitattributes
+```powershell
+javac -d out -cp "lib/*" (Get-ChildItem -Recurse -Filter *.java src/model,src/database,src/backend).FullName
 ```
 
-## Current Progress
+### 3. Run the integration test
 
-The MySQL database has been created and tested with sample data.
+```powershell
+java -cp "out;lib/*" database.DaoIntegrationTest
+```
 
-Completed so far:
-- Database and tables
-- Primary and foreign keys
-- Sample users and pets
-- Adoption application data
-- Messaging data
-- System settings
-- Basic SQL queries
-- GitHub repository setup
--  Database schema is completed
-- SQL file has been added to the repository
-- JDBC connection is set up and working
-- DAO classes for Users, Pets, Adoption Applications, Messages and Settings are implemented
-- Basic login functionality is working
-- DAO test files have been added and tested
-- MySQL Connector/J has been added to the project
-- Database and JDBC files have been pushed to GitHub
-- DAOs return data and report errors; validation rules added; `DaoIntegrationTest` covers DAO + service layers
-- GUI, backend and integration are currently being worked on
+Check the test output for individual `PASS` or `FAIL` results.
 
-## Team
+If a test fails, verify the database configuration, table names, sample data, and database constraints before diagnosing the Java code.
 
-- **Adya Jha** - Database, SQL, JDBC and Database Integration
-- **Rashi** - Java GUI / Frontend
-- **Eshani** - Backend / OOP / Business Logic
-- **Anuskha** - Integration and Testing
+**Note:** The test instructions assume that the current test classes compile independently of the frontend. If a test requires additional packages, include those source files in the compilation command.
+
+## Application Workflows
+
+### Adopter workflow
+
+1. Launch the application.
+2. Log in with an adopter account.
+3. Browse the available pets.
+4. Select a pet and open the adoption application dialog.
+5. Enter the required application details.
+6. Submit the application.
+7. Check the result message and application status, where available.
+
+### Shelter workflow
+
+1. Log in with a shelter account.
+2. Access pet-management functionality.
+3. Add or manage pet listings.
+4. Review adoption applications associated with the shelter's pets.
+5. Update application statuses where supported.
+6. Use messaging functionality where available.
+
+### Administrator workflow
+
+1. Log in with an administrator account.
+2. Open the administration dashboard.
+3. Access user-management functionality.
+4. Review pet listings and moderate them where supported.
+5. Access platform settings and statistics where implemented.
+
+## Business Rules
+
+The application uses database constraints and DAO/service validation to enforce adoption-related rules.
+
+The documented rules include:
+
+- Supported user roles: `Admin`, `Shelter`, and `Adopter`.
+- Listing statuses: `Pending`, `Approved`, and `Rejected`.
+- Pet statuses: `Available` and `Adopted`.
+- Adoption application statuses: `Pending`, `Approved`, and `Rejected`.
+- Message delivery statuses: `Sent`, `Delivered`, and `Read`.
+- An adopter may apply only for a pet whose listing is approved and whose pet status is available.
+- An adopter may apply for the same pet only once.
+
+Status and role values should use the shared constants defined in `model.Status` rather than repeated string literals.
+
+The database schema and DAO validation should remain consistent with these rules.
+
+## Error Handling and Validation
+
+The backend and data-access layers are designed to handle invalid input and database errors separately.
+
+- Input validation checks values before performing operations.
+- Invalid role or status values may raise `IllegalArgumentException`.
+- DAO methods propagate `SQLException` when database operations fail.
+- Service-layer exceptions provide a way to communicate application-level failures.
+- GUI screens should show understandable error messages instead of exposing raw database details to users.
+
+The exact behavior depends on the implementation of each operation.
+
+## Security Notes
+
+- Demo credentials are intended for local testing only.
+- Never commit real database passwords or other secrets to a public repository.
+- Use environment variables or an appropriate configuration mechanism for local database credentials.
+- A production application should store passwords as secure hashes, not plaintext.
+- Validate user input and use parameterized SQL statements to reduce SQL injection risks.
+
+## Team Contributions
+
+| Team member | Primary responsibility |
+|---|---|
+| **Adya Jha** | Database design, SQL, JDBC, DAO layer, and database integration |
+| **Rashi** | Java Swing GUI and frontend |
+| **Eshani** | Backend development, OOP, and business logic |
+| **Anuskha** | Integration and testing |
+
+The project is developed collaboratively, with integration between the frontend, backend services, and database layer.
 
 ## Academic Project
 
-This project is being developed as part of our 3rd semester academic coursework.
+This project is developed as part of third-semester Computer Science coursework.
+
+The codebase is intended for educational use and demonstrates Java Swing, object-oriented programming, JDBC, MySQL database operations, and collaborative software development.
