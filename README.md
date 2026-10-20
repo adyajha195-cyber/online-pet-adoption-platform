@@ -196,9 +196,6 @@ The backend acts as a bridge between the Java Swing frontend and the existing DA
 
 **Architecture:** `Java Swing Frontend → Backend Services → DAO Layer → MySQL Database`
 
-### Current Progress
-Backend service classes have been developed, and integration with the existing database layer is in progress. Testing is being carried out to verify communication between components and ensure the application functions correctly.
-
 ##  Notes
 
 * The demo credentials are intended for testing, not production use.
